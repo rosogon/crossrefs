@@ -1,77 +1,50 @@
-__author__ = 'roman'
+# -*- coding: utf-8 -*-
+from __future__ import print_function
 
+import io
+import sys
 
 from tokenizer import Tokenizer
-from tokenizer import Token
 from tokenizer import Kinds
+from tokenizer import Token
 
-
-class Node(object):
-    pass
-
-
-class ItemName(Node):
-    pass
-
-
-class ItemContent(Node):
-    pass
-
-
-class Paragraph(Node):
-    pass
-
-
-class Chunk(Node):
-    pass
-
-
-class CrossReference(Node):
-    pass
+import output
 
 
 class Parser(object):
 
-    def __init__(self, tokenizer_):
+    def __init__(self, tokenizer_, outputer_):
         self.tokenizer = tokenizer_
+        self.outputer = outputer_
 
     def _parse1(self):
-        items = set()
-        for token in self.tokenizer.nexttoken():
-            if token.is_(Kinds.ITEM):
-                items.add(token.value)
+        items = {
+            t.normvalue: t
+            for t in self.tokenizer.tokens()
+            if t.is_(Kinds.ITEM)
+        }
         return items
 
-    def _parse1a(self):
+    def _parse2(self, items):
+        self.outputer.begin()
+        for t in self.tokenizer.tokens():
+            if t.is_(Kinds.WORD) and t.normvalue in items:
+                t = t.crossref()
 
-        from itertools import ifilter
-        items = set(
-            map(
-                lambda x: x.value,
-                ifilter(
-                    lambda x: x.is_(Kinds.ITEM),
-                    self.tokenizer.nexttoken()
-                )
-            )
-        )
-        return items
-
-    def _parse1b(self):
-        items = [
-            token.value
-            for token in self.tokenizer.nexttoken()
-            if token.is_(Kinds.ITEM)
-        ]
-        return items
+            self.outputer.out(t)
+        self.outputer.end()
 
     def parse(self, file_):
         self.tokenizer.init(file_)
         items = self._parse1()
-        print (items)
+        self.tokenizer.init(file_)
+        #with io.open(sys.stdout, encoding="utf-8") as out:
+        self._parse2(items)
 
 
 if __name__ == "__main__":
-    with open("../mitologia.pre") as f:
+    with io.open("old/mitologia.pre", encoding="utf-8") as f:
         tokenizer = Tokenizer()
-        parser = Parser(tokenizer)
+        outputer = output.HtmlOutputer()
+        parser = Parser(tokenizer, outputer)
         parser.parse(f)

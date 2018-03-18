@@ -1,4 +1,4 @@
-__author__ = 'roman'
+# -*- coding: utf-8 -*-
 
 import unittest
 from StringIO import StringIO
@@ -6,6 +6,7 @@ from StringIO import StringIO
 from crossrefs.tokenizer import Tokenizer
 from crossrefs.tokenizer import Token
 from crossrefs.tokenizer import Kinds
+from crossrefs.tokenizer import normalize as n
 
 
 class TokenizerTestCase(unittest.TestCase):
@@ -20,51 +21,44 @@ class TokenizerTestCase(unittest.TestCase):
         f = StringIO(s)
         t.init(f)
 
-        g = t.readline()
+        g = t.lines()
         self.assertEquals(l1, g.next())
         self.assertEquals(l2, g.next())
-        self.assertEquals(l3, g.next())
-
-    def test_nextword(self):
-        t = Tokenizer()
-        s = "word1 word2\n  word3\n\tword4   "
-        t.init(StringIO(s))
-
-        words = ["word1", "word2", "\n", "word3", "\n", "word4", "\n"]
-        g = t.nextword()
-        for word in words:
-            self.assertEquals(word, g.next())
-
-        try:
-            g.next()
-        except StopIteration:
-            pass
+        self.assertEquals(l3 + "\n", g.next())
 
     def test_nexttoken(self):
         t = Tokenizer()
-        s = "[item1] word1 [item2] word2"
+        s = u"[item1] word1 [item2] word2(ícaro)"
         t.init(StringIO(s))
 
         tokens = [
-            Token(Kinds.ITEM, "item1"),
-            Token(Kinds.WORD, "word1"),
-            Token(Kinds.ITEM, "item2"),
-            Token(Kinds.WORD, "word2")
+            Token(Kinds.ITEM, u"item1"),
+            Token(Kinds.PUNCTUATION, u" "),
+            Token(Kinds.WORD, u"word1"),
+            Token(Kinds.PUNCTUATION, u" "),
+            Token(Kinds.ITEM, u"item2"),
+            Token(Kinds.PUNCTUATION, u" "),
+            Token(Kinds.WORD, u"word2"),
+            Token(Kinds.PUNCTUATION, u"("),
+            Token(Kinds.WORD, u"ícaro"),
+            Token(Kinds.PUNCTUATION, u")")
         ]
 
-        g = t.nexttoken()
-        for token in tokens:
-            self.assertEquals(token, g.next())
+        g = t.tokens()
+        for expected in tokens:
+            actual = g.next()
+            self.assertEquals(expected, actual)
 
         try:
             g.next()
         except StopIteration:
             pass
 
-    def test_something(self):
-        #self.assertEqual(True, False)
-        pass
-
+    def test_normalize(self):
+        self.assertEquals(n(u"word"), "WORD")
+        self.assertEquals(n(u"á"), "A")
+        self.assertEquals(n(u"ícarO"), "ICARO")
+        self.assertEquals(n(u"a."), "A.")
 
 if __name__ == '__main__':
     unittest.main()

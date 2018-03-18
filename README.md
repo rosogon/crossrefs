@@ -6,11 +6,11 @@ each item that appears on a definition is linked to the item itself.
 
 F.e., the following input:
 
-    \[Zeus\]
+    [Zeus]
     
     Lived in Mount Olympus. Married to Hera.
     
-    \[Hera\]
+    [Hera]
     
     Lived in Mount Olympus. Married to Zeus.
 
